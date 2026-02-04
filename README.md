@@ -1,4 +1,4 @@
-# 🔒 LOCKD
+# LOCK🔒D
 
 **Platform:** iOS 📱  
 **Team Name:** Healthiest People 💪
@@ -11,10 +11,10 @@ LOCKD is an iOS productivity app that helps users *lock in* while studying. By c
 
 - **Luke Prasarttongosoth** – Project Manager  
 - **Chris Lum** – Project Manager  
-- **Hana Kang**  
-- **Joy Chang**  
-- **Nathan Tran**  
-- **Katie Xu**
+- **Hana Kang** - Frontend
+- **Joy Chang** - Frontend
+- **Nathan Tran** - Backend
+- **Katie Xu** - Backend
 
 **GitHub Usernames**
 - clum45-rgb  
