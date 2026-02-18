@@ -8,14 +8,16 @@
 import SwiftUI
 
 struct HomescreenView: View {
+    var hideFooter: Bool = false
+
     var body: some View {
         ZStack {
             Color(red: 0.12, green: 0.09, blue: 0.14) // Bg color from Figma
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 20) {
                 headerSection
-                
+
                 ScrollView {
                     VStack(spacing: 18) {
                         streakCard
@@ -23,8 +25,10 @@ struct HomescreenView: View {
                     }
                     .padding(.horizontal, 20)
                 }
-                
-                customFooter
+
+                if !hideFooter {
+                    customFooter
+                }
             }
         }
     }
