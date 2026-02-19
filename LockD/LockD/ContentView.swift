@@ -9,6 +9,7 @@ import SwiftUI
 
 enum MainTab {
     case home
+    case trophy
     case profile
 }
 
@@ -21,6 +22,8 @@ struct ContentView: View {
                 switch selectedTab {
                 case .home:
                     HomescreenView(hideFooter: true)
+                case .trophy:
+                    LeaderboardView(hideFooter: true)
                 case .profile:
                     UserProfileView(hideFooter: true)
                 }
@@ -38,7 +41,11 @@ struct ContentView: View {
                 Image(systemName: "house.fill")
             }
             Spacer()
-            Image(systemName: "trophy")
+            Button {
+                selectedTab = .trophy
+            } label: {
+                Image(systemName: "trophy.fill")
+            }
             Spacer()
             Button {
                 selectedTab = .profile
