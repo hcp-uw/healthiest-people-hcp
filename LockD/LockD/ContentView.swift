@@ -11,6 +11,7 @@ enum MainTab {
     case home
     case trophy
     case profile
+    case record
 }
 
 struct ContentView: View {
@@ -24,6 +25,8 @@ struct ContentView: View {
                     HomescreenView(hideFooter: true)
                 case .trophy:
                     LeaderboardView(hideFooter: true)
+                case .record:
+                    RecordView(hideFooter: true)
                 case .profile:
                     UserProfileView(hideFooter: true)
                 }
@@ -39,6 +42,12 @@ struct ContentView: View {
                 selectedTab = .home
             } label: {
                 Image(systemName: "house.fill")
+            }
+            Spacer()
+            Button {
+                selectedTab = .record
+            } label: {
+                Image(systemName: "camera.fill")
             }
             Spacer()
             Button {

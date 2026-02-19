@@ -107,7 +107,7 @@ struct HomescreenView: View {
             Spacer()
             Image(systemName: "house.fill")
             Spacer()
-            Image(systemName: "trophy")
+            Image(systemName: "trophy.fill")
             Spacer()
             Image(systemName: "person.fill")
             Spacer()

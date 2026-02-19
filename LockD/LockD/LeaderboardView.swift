@@ -196,3 +196,6 @@ private struct LeaderboardRow: View {
     }
 }
 
+#Preview {
+    ContentView()
+}
