@@ -32,7 +32,7 @@ struct RecordView: View {
             Color(red: 0.12, green: 0.09, blue: 0.14)
                 .ignoresSafeArea()
 
-            VStack(spacing: 20) {
+            VStack(spacing: 0) {
                 headerSection
 
                 ScrollView(showsIndicators: false) {
@@ -43,14 +43,16 @@ struct RecordView: View {
                         startRecordingButton
                         tipsCard
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 10)
+                    .padding(.bottom, 100)
                 }
 
                 if !hideFooter {
                     customFooter
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -73,6 +75,8 @@ struct RecordView: View {
         }
         .padding(.horizontal, 25)
         .padding(.top, 10)
+        .padding(.bottom, 8)
+        .background(Color(red: 0.12, green: 0.09, blue: 0.14))
     }
 
     // MARK: - Record New Task Button
@@ -102,7 +106,7 @@ struct RecordView: View {
                 .foregroundColor(.white)
 
             // Emoji grid row
-            HStack(spacing: 18) {
+            HStack(spacing: 12) {
                 ForEach(TaskType.allCases, id: \.self) { task in
                     taskEmoji(task)
                 }
@@ -132,10 +136,10 @@ struct RecordView: View {
             ZStack {
                 Circle()
                     .fill(task == selectedTask ? Color(red: 0.32, green: 0.42, blue: 1) : Color(red: 0.23, green: 0.07, blue: 0.42))
-                    .frame(width: 48, height: 48)
+                    .frame(width: 40, height: 40)
                     .overlay(Circle().stroke(Color.white.opacity(0.6), lineWidth: 0.6))
                 Text(task.emoji)
-                    .font(.system(size: 24))
+                    .font(.system(size: 20))
             }
         }
         .buttonStyle(.plain)
@@ -148,25 +152,20 @@ struct RecordView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white)
 
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(red: 0.16, green: 0.13, blue: 0.21))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.6), lineWidth: 0.6)
-                    )
-                    .frame(height: 56)
-
-                if descriptionText.isEmpty {
-                    Text("E.g., Practicing French Speaking…")
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.horizontal, 14)
-                }
-
-                TextField("", text: $descriptionText)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 14)
-            }
+            TextField("E.g., Practicing French Speaking…", text: $descriptionText)
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+                .frame(height: 56)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(red: 0.19, green: 0.16, blue: 0.24))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.white.opacity(0.6), lineWidth: 0.6)
+                        )
+                )
+                .autocorrectionDisabled()
         }
     }
 
