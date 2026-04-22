@@ -1,0 +1,131 @@
+rules_version = '2';
+
+// LOCKD Firestore security rules — MVP.
+//
+// Principle: the client can only write what it owns, and can never touch
+// server-computed fields (xp, streaks, counters, leaderboards). Field names
+// track the iOS data models exactly — LockDUser.swift, Post.swift,
+// StudySession.swift.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------- helpers --------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    // True iff the incoming write does not modify any of the given fields.
+    function fieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+    // True iff the create payload only contains keys in the allowed set.
+    function onlyHasKeys(allowed) {
+      return request.resource.data.keys().hasOnly(allowed);
+    }
+
+    // -------- users --------
+    // Doc id == Firebase Auth uid. Field names must match LockDUser.swift.
+    match /users/{uid} {
+      allow read: if isSignedIn();
+
+      // Owner can create their profile doc on first sign-in, but cannot
+      // set server-managed fields. onUserCreated fills those in.
+      allow create: if isOwner(uid)
+        && onlyHasKeys([
+          'displayName', 'photoURL', 'username', 'lastActiveAt'
+        ]);
+
+      // Owner can update profile fields only. All stats — XP, streaks, the
+      // weekly/previous-week counters, the session-count / post-count, and
+      // the server-owned timestamps — are written by Cloud Functions.
+      allow update: if isOwner(uid)
+        && fieldsUnchanged([
+          'xp',
+          'currentStreak', 'longestStreak', 'lastStudyDay',
+          'timesLockedIn', 'minutesPerWeek', 'previousWeekPoints',
+          'postCount',
+          'createdAt', 'updatedAt'
+        ]);
+
+      allow delete: if false; // handle via admin tool / account deletion Function
+    }
+
+    // Username uniqueness map. Only the `claimUsername` Cloud Function writes here.
+    match /usernames/{username} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // -------- sessions --------
+    // Field names must match StudySession.swift. Client sends raw values;
+    // onSessionCreated clamps duration, awards XP, and updates user stats.
+    match /sessions/{sessionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.durationMinutes is int
+        && request.resource.data.durationMinutes > 0
+        && onlyHasKeys([
+          'userId', 'taskType', 'description', 'durationMinutes', 'createdAt'
+        ]);
+
+      // Sessions are immutable from the client after creation.
+      allow update, delete: if false;
+    }
+
+    // -------- posts --------
+    // Field names must match Post.swift.
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+
+      // Posts must be created via the `createPostFromSession` HTTPS callable.
+      // That function runs with admin privileges (bypassing these rules), so
+      // we close off the direct client write path entirely. This guarantees
+      // every post is backed by a verified session with a server-clamped
+      // duration, denormalized author info, and a linked postId.
+      allow create: if false;
+
+      // Author can edit caption only. Counts / duration are server-only.
+      allow update: if isSignedIn()
+        && resource.data.authorId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['caption']);
+
+      allow delete: if isSignedIn()
+        && resource.data.authorId == request.auth.uid;
+
+      // -------- comments --------
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+
+        allow create: if isSignedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 500;
+
+        // Comments are immutable from clients; delete allowed by author only.
+        allow update: if false;
+        allow delete: if isSignedIn()
+          && resource.data.authorId == request.auth.uid;
+      }
+
+      // -------- reactions (doc-per-user) --------
+      match /reactions/{uid} {
+        allow read: if isSignedIn();
+        allow create, update: if isOwner(uid)
+          && request.resource.data.type in ['fire', 'clap', 'brain'];
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    // -------- leaderboards (read-only for clients) --------
+    match /leaderboards/{board}/{document=**} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+  }
+}

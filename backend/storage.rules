@@ -1,0 +1,49 @@
+rules_version = '2';
+
+// LOCKD Storage rules — MVP.
+// Videos and thumbnails are namespaced by the owning UID so we can enforce
+// ownership with a single path check.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // --- video uploads ---
+    match /videos/{uid}/{file} {
+      // Anyone signed in can watch; change to friends-only later if needed.
+      allow read: if isSignedIn();
+
+      // Only the owner can upload, and we enforce size + content type.
+      allow write: if isOwner(uid)
+        && request.resource.size < 100 * 1024 * 1024 // 100 MB hard cap
+        && request.resource.contentType.matches('video/.*');
+    }
+
+    // --- thumbnails ---
+    match /thumbnails/{uid}/{file} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(uid)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // --- avatars ---
+    match /avatars/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(uid)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Default-deny everything else.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
